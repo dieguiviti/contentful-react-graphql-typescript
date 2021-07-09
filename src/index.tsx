@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import { ContentfulApiProvider } from './apollo';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ContentfulApiProvider>
+      <App />
+    </ContentfulApiProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

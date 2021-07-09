@@ -1,67 +1,90 @@
-import {useState, useEffect} from "react";
+import { gql } from '@apollo/client';
 import './App.css';
+import { useContentful } from './useContentful';
 
-const query = `
-{
-  pageCollection {
-    items {
-      title
-      logo {
-        url
+const query = gql`
+  query {
+    pageCollection {
+      items {
+        title
+        logo {
+          url
+        }
       }
     }
   }
-}
-`
+`;
+
+const propQuery = gql`
+  query {
+    propertyCollection {
+      items {
+        title
+        propReference
+      }
+    }
+  }
+`;
 
 type Page = {
   title: string;
   logo: {
-    url: string
-  }
-}
+    url: string;
+  };
+  richText: Document;
+};
 
-const contentfulSpaceId = process.env.REACT_APP_CONTENTFUL_SPACE_ID
-const contentfulAccessToken = process.env.REACT_APP_CONTENTFUL_ACCESS_TOKEN
+type Property = {
+  title: string;
+  propReference: string;
+};
 
 function App() {
+  const { data, error, loading } =
+    useContentful<Page>(query);
 
-  const [page, setPage] = useState({} as Page)
+  const properties = useContentful<Property>(propQuery);
 
-  useEffect(() => {
-    window.fetch(
-      `https://graphql.contentful.com/content/v1/spaces/${contentfulSpaceId}/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${contentfulAccessToken}`
-        },
-        body: JSON.stringify({ query })
-      }
-    ).then(res => {
-      return res.json()
-    }).then(({ data, errors }) => {
-      if (errors) {
-        console.log(errors)
-      }
-      console.log(data)
+  if (!data) {
+    return <div>loading...</div>;
+  }
 
-      setPage(data.pageCollection.items[0])
-    })
-  }, [])
+  if (error) {
+    return (
+      <div>Sorry there was an error with your query</div>
+    );
+  }
 
+  if (loading) {
+    return <h1>loading...</h1>;
+  }
 
-  return page ? (
-    <div className="App">
-      <header className="App-header">
-        <img src={page.logo ? page.logo.url : ''} className="App-logo" alt="logo" />
-        <p>
-          {page ? page.title : ''}
-        </p>
+  const page = data.pageCollection?.items[0];
+
+  return (
+    <div className='App'>
+      <header className='App-header'>
+        <img
+          src={page.logo ? page.logo.url : ''}
+          className='App-logo'
+          alt='logo'
+        />
+        <p>{page ? page.title : ''}</p>
       </header>
+      <div>
+        <pre>{JSON.stringify(data)}</pre>{' '}
+      </div>
+      <div>
+        <pre>{JSON.stringify(properties?.data)}</pre>{' '}
+      </div>
     </div>
-  ) : <h1>Loading...</h1>;
+  );
 }
 
 export default App;
+
+// return (
+//   <div>
+//     <pre>{JSON.stringify(data)}</pre>
+//   </div>
+// );
